@@ -1,8 +1,13 @@
 "use strict";
 
-const NOTES = JSON.parse(localStorage.getItem("NOTES")) || [];
+function Note(bodyText) {
+  this.bodyText = bodyText;
+  this.buttonText = "🗑️";
+  this.textarea = null; // Initialize textarea as null
+  this.removeButton = null; // Initialize button as null
+}
 
-console.log(NOTES);
+const NOTES = JSON.parse(localStorage.getItem("NOTES")) || [];
 
 // Get references
 const NOTE_LIST = document.getElementById("list-notes");
@@ -33,46 +38,38 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 const createNote = ({ bodyText }) => {
-  const note = {
-    id: Date.now(),
-    bodyText: bodyText,
-  };
+  const note = new Note(bodyText);
   NOTES.push(note);
   return note;
 };
 
 const removeNote = ({ bodyText }) => {
-  console.log("BodyText  removing ", bodyText);
   const noteIndex = NOTES.findIndex((note) => note.bodyText === bodyText);
   noteIndex !== -1 ? NOTES.splice(noteIndex, 1) : null;
-  console.log("After removing ", NOTES);
-};
-
-const addTrashIconToNote = (note_textarea_tag, container) => {
-  const trashIcon = document.createElement("button");
-  trashIcon.innerText = "🗑️"; // You can use any trash icon you prefer
-
-  // Add a click event listener to the trash icon to remove the note
-  trashIcon.addEventListener("click", () => {
-    removeNote({ bodyText: note_textarea_tag.value });
-    container.remove();
-  });
-
-  // Append the trash icon next to the <p> tag
-  container.appendChild(trashIcon);
 };
 
 for (const note in NOTES) {
-  const note_textarea_tag = document.createElement("textarea");
-  note_textarea_tag.addEventListener("input", (e) => {
-    NOTES[note].bodyText = e.target.value;
+  NOTES[note].textarea = document.createElement("textarea");
+  NOTES[note].textarea.value = NOTES[note].bodyText;
+  NOTES[note].textarea.addEventListener("input", (e) => {
+    const noteIndex = NOTES.findIndex(
+      (note) => note.bodyText === NOTES[note].bodyText
+    );
+    NOTES[noteIndex].bodyText = e.target.value;
   });
-  note_textarea_tag.value = NOTES[note].bodyText;
+
+  NOTES[note].removeButton = document.createElement("button");
+  NOTES[note].removeButton.innerText = NOTES[note].buttonText; // You can use any trash icon you prefer
+  // Add a click event listener to the trash icon to remove the note
+  NOTES[note].removeButton.addEventListener("click", () => {
+    removeNote({ bodyText: NOTES[note].bodyText });
+    container.remove();
+  });
 
   const container = document.createElement("div");
-  // Add the trash icon next to the <p> tag
-  container.appendChild(note_textarea_tag);
-  addTrashIconToNote(note_textarea_tag, container);
+
+  container.appendChild(NOTES[note].textarea);
+  container.appendChild(NOTES[note].removeButton);
   NOTE_LIST.appendChild(container);
 }
 
@@ -82,20 +79,28 @@ note_form.addEventListener("submit", (e) => {
   const noteText = document.getElementById("noteText");
   const newNote = createNote({ bodyText: noteText.value });
   noteText.value = "";
-  const container = document.createElement("div");
-  const note_textarea_tag = document.createElement("textarea");
-  note_textarea_tag.value = newNote.bodyText;
 
-  note_textarea_tag.addEventListener("input", (e) => {
+  newNote.textarea = document.createElement("textarea");
+
+  newNote.textarea.value = newNote.bodyText;
+  newNote.textarea.addEventListener("input", (e) => {
     const noteIndex = NOTES.findIndex(
       (note) => note.bodyText === newNote.bodyText
     );
     NOTES[noteIndex].bodyText = e.target.value;
   });
-  container.appendChild(note_textarea_tag);
 
-  // Add the trash icon next to the <p> tag
-  addTrashIconToNote(note_textarea_tag, container);
+  newNote.removeButton = document.createElement("button");
+  newNote.removeButton.innerText = newNote.buttonText; // You can use any trash icon you prefer
+  // Add a click event listener to the trash icon to remove the note
+  newNote.removeButton.addEventListener("click", () => {
+    removeNote({ bodyText: newNote.bodyText });
+    container.remove();
+  });
 
+  const container = document.createElement("div");
+
+  container.appendChild(newNote.textarea);
+  container.appendChild(newNote.removeButton);
   NOTE_LIST.appendChild(container);
 });
